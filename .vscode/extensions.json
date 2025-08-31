@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-js-profile-flame",
+    "ms-vscode.js-debug-nightly",
+    "ms-vscode.vscode-typescript-next",
+    "humao.rest-client",
+    "ms-playwright.playwright"
+  ]
+}
+

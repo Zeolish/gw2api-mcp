@@ -1,0 +1,110 @@
+{
+  // Debug configurations for Fastify server, Electron main, renderer attach, Vitest, and Playwright
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: Fastify (dev)",
+      "cwd": "${workspaceFolder}/apps/server",
+      "preLaunchTask": "bootstrap:dev",
+      // Prefer running via pnpm script if it exists
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "autoAttachChildProcesses": true,
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"],
+      // Fallback if no dev script exists:
+      // - Comment out runtimeExecutable/runtimeArgs above, then uncomment one of the blocks below.
+      // - ts-node (CJS):
+      //   "program": "${workspaceFolder}/apps/server/src/index.ts",
+      //   "runtimeExecutable": "node",
+      //   "runtimeArgs": ["-r", "ts-node/register/transpile-only"],
+      // - tsx (ESM):
+      //   "program": "${workspaceFolder}/apps/server/src/index.ts",
+      //   "runtimeExecutable": "node",
+      //   "runtimeArgs": ["--loader", "tsx"],
+      // - tsx (CJS):
+      //   "program": "${workspaceFolder}/apps/server/src/index.ts",
+      //   "runtimeExecutable": "node",
+      //   "runtimeArgs": ["-r", "tsx"]
+      
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Electron: Main",
+      "cwd": "${workspaceFolder}/apps/desktop",
+      "preLaunchTask": "bootstrap:dev",
+      // Run desktop via pnpm dev (electron-vite)
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev"],
+      "protocol": "inspector",
+      "outputCapture": "std",
+      "env": {
+        "NODE_ENV": "development",
+        "ELECTRON_RUN_AS_NODE": ""
+      },
+      "sourceMaps": true,
+      "resolveSourceMapLocations": ["!**/node_modules/**", "!**/dist/**"],
+      "console": "integratedTerminal"
+      // If main is TypeScript, you can register a transpiler at runtime.
+      // Option A (ts-node): add to env below or convert to runtimeArgs
+      //   "env": { "NODE_ENV": "development", "NODE_OPTIONS": "-r ts-node/register/transpile-only" }
+      //   or
+      //   "runtimeArgs": ["-r", "ts-node/register/transpile-only", ".", "--remote-debugging-port=9223"]
+      // Option B (tsx):
+      //   "env": { "NODE_ENV": "development", "NODE_OPTIONS": "-r tsx/register" }
+    },
+    {
+      "type": "pwa-chrome",
+      "request": "attach",
+      "name": "Electron: Renderer (Attach)",
+      "port": 9223,
+      "webRoot": "${workspaceFolder}/apps/desktop"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Vitest: Run Tests",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["test"],
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "sourceMaps": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Playwright: E2E",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["test:e2e"],
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "console": "integratedTerminal",
+      "outputCapture": "std"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Dev: Desktop + Server",
+      "configurations": [
+        "Server: Fastify (dev)",
+        "Electron: Main"
+      ],
+      "stopAll": true,
+      "preLaunchTask": "bootstrap:dev"
+    }
+  ]
+}

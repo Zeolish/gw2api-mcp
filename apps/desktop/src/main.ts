@@ -1,8 +1,17 @@
 import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell, clipboard } from 'electron';
 import path from 'path';
 import keytar from 'keytar';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { startServer: buildServer } = require('../server');
+// Defer resolving the server builder so dev can run independently.
+let buildServer: undefined | (() => { start: () => Promise<any>; stop: () => Promise<any> });
+function resolveServerBuilder() {
+  if (buildServer) return buildServer;
+  try {
+    // Try workspace import (if packaged/built)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    buildServer = require('@gw2-mcp/server').startServer;
+  } catch { buildServer = undefined; }
+  return buildServer;
+}
 
 let tray: Tray | null = null;
 let win: BrowserWindow | null = null;
@@ -25,7 +34,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-  win.loadFile(path.join(__dirname, 'index.html'));
+  const devUrl = process.env.ELECTRON_RENDERER_URL;
+  if (devUrl) {
+    win.loadURL(devUrl);
+  } else {
+    win.loadFile(path.join(__dirname, 'index.html'));
+  }
   win.on('closed', () => {
     win = null;
   });
@@ -33,7 +47,12 @@ function createWindow() {
 
 async function startServer() {
   if (serverCtrl) return;
-  serverCtrl = buildServer();
+  const builder = resolveServerBuilder();
+  if (!builder) {
+    console.warn('Server module not found. Start it via the VS Code launch config.');
+    return;
+  }
+  serverCtrl = builder();
   await serverCtrl.start();
   shell.openExternal(DOCS);
 }
