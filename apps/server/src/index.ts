@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import fastifyStatic from '@fastify/static';
+import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import {
@@ -38,7 +39,8 @@ export function buildServer() {
 
   app.addContentTypeParser('application/json-rpc', { parseAs: 'string' }, (req, body, done) => {
     try {
-      done(null, JSON.parse(body));
+      const text = typeof body === 'string' ? body : body.toString('utf8');
+      done(null, JSON.parse(text));
     } catch (err) {
       done(err as Error);
     }
@@ -97,14 +99,25 @@ export function buildServer() {
     [ToolNames.PricesGet]: z.object({ ids: z.array(z.number()) }),
   };
 
+  // Build a normalized lookup so we accept minor naming variations
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const methodIndex = new Map<string, string>();
+  Object.keys(methods).forEach((k) => {
+    // canonical
+    methodIndex.set(normalize(k), k);
+    // without gw2. prefix
+    if (k.startsWith('gw2.')) methodIndex.set(normalize(k.slice(4)), k);
+  });
+
   // JSON-RPC endpoint
   app.post('/mcp', async (request): Promise<McpResponse> => {
     const body = request.body as McpRequest;
-    const fn = methods[body.method];
-    if (!fn) {
+    const key = methodIndex.get(normalize(String(body.method || '')));
+    if (!key) {
       return { id: body.id, error: { code: -32601, message: 'Method not found' } };
     }
-    const schema = schemas[body.method];
+    const fn = methods[key];
+    const schema = schemas[key];
     let params = body.params;
     if (schema) {
       const parsed = schema.safeParse(body.params);
@@ -186,12 +199,15 @@ export function buildServer() {
   app.get('/api/account/characters', accountShim(() => methods[ToolNames.AccountCharacters]()));
   app.get('/api/account/wallet', accountShim(() => methods[ToolNames.AccountWallet]()));
 
-  // Static UI mounted under /ui/
-  app.register(fastifyStatic, {
-    root: path.join(__dirname, '..', 'public'),
-    prefix: '/ui/',
-    decorateReply: false,
-  });
+  // Static UI mounted under /ui/ (only if present)
+  const uiRoot = path.join(__dirname, '..', 'public');
+  if (fs.existsSync(uiRoot)) {
+    app.register(fastifyStatic, {
+      root: uiRoot,
+      prefix: '/ui/',
+      decorateReply: false,
+    });
+  }
 
   // Not found handler
   app.setNotFoundHandler((req, reply) => {
