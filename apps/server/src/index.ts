@@ -3,7 +3,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import dotenv from 'dotenv';
 import { fetch } from 'undici';
-import { JsonRpcRequest } from '@gw2-mcp/shared';
+import { McpRequest, McpResponse } from '@gw2-mcp/shared';
 
 dotenv.config();
 
@@ -16,12 +16,12 @@ app.register(swagger, {
 });
 app.register(swaggerUi, { routePrefix: '/docs' });
 
-app.post('/mcp', async (request) => {
-  const body = request.body as JsonRpcRequest;
+app.post('/mcp', async (request): Promise<McpResponse> => {
+  const body = request.body as McpRequest;
   if (body.method === 'ping') {
-    return { jsonrpc: '2.0', result: 'pong', id: body.id ?? null };
+    return { id: body.id, result: 'pong' };
   }
-  return { jsonrpc: '2.0', error: { code: -32601, message: 'Method not found' }, id: body.id ?? null };
+  return { id: body.id, error: { code: -32601, message: 'Method not found' } };
 });
 
 app.get('/api/status', async () => {

@@ -26,6 +26,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@gw2-mcp/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       electron:
         specifier: ^30.0.0
         version: 30.5.1
