@@ -8,13 +8,15 @@
     "package": "pnpm --filter @gw2-mcp/desktop package",
     "test": "pnpm -C apps/server test",
     "smoke:mcp": "pnpm -C apps/server smoke:mcp",
-    "smoke:mcp-get-vs-post": "pnpm -C apps/server smoke:mcp-get-vs-post"
+    "smoke:mcp-get-vs-post": "pnpm -C apps/server smoke:mcp-get-vs-post",
+    "smoke:port": "tsx scripts/smoke/port-ownership.ts"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
     "eslint": "^8.56.0",
     "prettier": "^3.1.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "@typescript-eslint/eslint-plugin": "^6.20.0"
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "tsx": "^4.7.3"
   }
 }

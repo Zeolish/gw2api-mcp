@@ -38,6 +38,7 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, 'src'),
+    server: { port: 5173 },
     build: {
       outDir: resolve(__dirname, 'dist'),
       sourcemap: true,
