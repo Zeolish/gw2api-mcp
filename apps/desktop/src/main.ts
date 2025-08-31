@@ -15,7 +15,8 @@ function resolveServerBuilder() {
 
 let tray: Tray | null = null;
 let win: BrowserWindow | null = null;
-let serverCtrl: ReturnType<typeof buildServer> | null = null;
+let serverCtrl: ReturnType<NonNullable<typeof buildServer>> | null = null;
+let isQuitting = false;
 
 const SERVICE = 'GW2Mcp';
 const ACCOUNT = 'GW2_API_KEY';
@@ -40,6 +41,12 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, 'index.html'));
   }
+  win.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      win?.hide();
+    }
+  });
   win.on('closed', () => {
     win = null;
   });
@@ -80,6 +87,9 @@ app.whenReady().then(() => {
   ]);
   tray.setToolTip('GW2 MCP');
   tray.setContextMenu(menu);
+});
+app.on('before-quit', () => {
+  isQuitting = true;
 });
 
 ipcMain.handle('get-status', getStatus);
