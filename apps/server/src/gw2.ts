@@ -54,7 +54,7 @@ export class Gw2Public {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const key = await keytar.getPassword('gw2-mcp', 'api-key');
+  const key = await keytar.getPassword('GW2Mcp', 'GW2_API_KEY');
   if (!key) {
     throw new Error('GW2 API key not set');
   }
@@ -77,14 +77,14 @@ export class Gw2Account {
 }
 
 export async function hasApiKey(): Promise<boolean> {
-  const key = await keytar.getPassword('gw2-mcp', 'api-key');
+  const key = await keytar.getPassword('GW2Mcp', 'GW2_API_KEY');
   return !!key;
 }
 
 export async function setApiKey(key: string): Promise<void> {
-  await keytar.setPassword('gw2-mcp', 'api-key', key);
+  await keytar.setPassword('GW2Mcp', 'GW2_API_KEY', key);
 }
 
 export async function deleteApiKey(): Promise<void> {
-  await keytar.deletePassword('gw2-mcp', 'api-key');
+  await keytar.deletePassword('GW2Mcp', 'GW2_API_KEY');
 }
