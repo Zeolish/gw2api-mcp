@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
 import { z } from 'zod';
 import {
   McpRequest,
@@ -52,15 +54,6 @@ export function buildServer() {
     done();
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    app.register(swagger, {
-      openapi: {
-        info: { title: 'GW2 MCP Local Debug', version: '0.0.0' },
-      },
-    });
-    app.register(swaggerUi, { routePrefix: '/docs' });
-  }
-
   const pub = new Gw2Public();
   const acct = new Gw2Account();
 
@@ -99,6 +92,7 @@ export function buildServer() {
     [ToolNames.PricesGet]: z.object({ ids: z.array(z.number()) }),
   };
 
+  // JSON-RPC endpoint
   app.post('/mcp', async (request): Promise<McpResponse> => {
     const body = request.body as McpRequest;
     const fn = methods[body.method];
@@ -121,6 +115,20 @@ export function buildServer() {
       return { id: body.id, error: { code: -32000, message: err.message } };
     }
   });
+
+  app.get('/mcp', async (_req, reply) => {
+    reply.code(405).type('application/json').send({ error: 'Method not allowed' });
+  });
+
+  // Swagger / docs - dev only
+  if (process.env.NODE_ENV !== 'production') {
+    app.register(swagger, {
+      openapi: {
+        info: { title: 'GW2 MCP Local Debug', version: '0.0.0' },
+      },
+    });
+    app.register(swaggerUi, { routePrefix: '/docs' });
+  }
 
   // REST shims
   app.get('/api/status', async () => methods[ToolNames.GetStatus]());
@@ -172,6 +180,22 @@ export function buildServer() {
   app.get('/api/account/bank', accountShim(() => methods[ToolNames.AccountBank]()));
   app.get('/api/account/characters', accountShim(() => methods[ToolNames.AccountCharacters]()));
   app.get('/api/account/wallet', accountShim(() => methods[ToolNames.AccountWallet]()));
+
+  // Static UI mounted under /ui/
+  app.register(fastifyStatic, {
+    root: path.join(__dirname, '..', 'public'),
+    prefix: '/ui/',
+    decorateReply: false,
+  });
+
+  // Not found handler
+  app.setNotFoundHandler((req, reply) => {
+    if (req.url.startsWith('/mcp') || req.url.startsWith('/api/')) {
+      reply.code(404).type('application/json').send({ error: 'Not found' });
+    } else {
+      reply.code(404).type('text/plain').send('Not Found');
+    }
+  });
 
   app.get('/debug/routes', () => app.printRoutes());
   app.get('/healthz', async () => ({ ok: true, nowUtc: new Date().toISOString() }));
