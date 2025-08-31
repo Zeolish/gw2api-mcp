@@ -7,7 +7,8 @@
     "build": "pnpm -r build",
     "package": "pnpm --filter @gw2-mcp/desktop package",
     "test": "pnpm -C apps/server test",
-    "smoke:mcp": "pnpm -C apps/server smoke:mcp"
+    "smoke:mcp": "pnpm -C apps/server smoke:mcp",
+    "smoke:mcp-get-vs-post": "pnpm -C apps/server smoke:mcp-get-vs-post"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

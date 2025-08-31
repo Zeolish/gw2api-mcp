@@ -48,6 +48,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@fastify/static':
+        specifier: ^7.0.4
+        version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.11.0
         version: 8.15.0
