@@ -1,5 +1,5 @@
 import { beforeAll, afterAll, it, expect } from 'vitest';
-import { startServer } from './index';
+import { startServer, buildServer } from './index';
 import { fetch } from 'undici';
 
 let srv: ReturnType<typeof startServer>;
@@ -20,4 +20,11 @@ it('GET /api/status returns JSON shape', async () => {
   expect(body).toHaveProperty('hasApiKey');
   expect(body).toHaveProperty('server');
   expect(body).toHaveProperty('port');
+});
+
+it('rejects non-loopback requests', async () => {
+  const app = buildServer();
+  const res = await app.inject({ method: 'GET', url: '/api/status', remoteAddress: '1.2.3.4' });
+  expect(res.statusCode).toBe(403);
+  await app.close();
 });
