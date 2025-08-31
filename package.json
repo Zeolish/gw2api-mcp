@@ -9,7 +9,8 @@
     "test": "pnpm -C apps/server test",
     "smoke:mcp": "pnpm -C apps/server smoke:mcp",
     "smoke:mcp-get-vs-post": "pnpm -C apps/server smoke:mcp-get-vs-post",
-    "smoke:port": "tsx scripts/smoke/port-ownership.ts"
+    "smoke:port": "tsx scripts/smoke/port-ownership.ts",
+    "smoke:key": "tsx scripts/smoke/key-persist.ts"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

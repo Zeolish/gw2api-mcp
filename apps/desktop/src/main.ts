@@ -1,6 +1,5 @@
 import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell, clipboard } from 'electron';
 import path from 'path';
-import keytar from 'keytar';
 // Defer resolving the server builder so dev can run independently.
 let buildServer: undefined | (() => { start: () => Promise<any>; stop: () => Promise<any> });
 function resolveServerBuilder() {
@@ -17,9 +16,6 @@ let tray: Tray | null = null;
 let win: BrowserWindow | null = null;
 let serverCtrl: ReturnType<NonNullable<typeof buildServer>> | null = null;
 let isQuitting = false;
-
-const SERVICE = 'GW2Mcp';
-const ACCOUNT = 'GW2_API_KEY';
 const ENDPOINT = 'http://127.0.0.1:5123/mcp';
 const DOCS = 'http://127.0.0.1:5123/docs';
 
@@ -70,11 +66,6 @@ async function stopServer() {
   serverCtrl = null;
 }
 
-async function getStatus() {
-  const key = await keytar.getPassword(SERVICE, ACCOUNT);
-  return { key: !!key, server: !!serverCtrl };
-}
-
 app.whenReady().then(() => {
   createWindow();
   tray = new Tray(nativeImage.createEmpty());
@@ -90,16 +81,6 @@ app.whenReady().then(() => {
 });
 app.on('before-quit', () => {
   isQuitting = true;
-});
-
-ipcMain.handle('get-status', getStatus);
-ipcMain.handle('set-api-key', async (_e, key: string) => {
-  await keytar.setPassword(SERVICE, ACCOUNT, key);
-  return true;
-});
-ipcMain.handle('delete-api-key', async () => {
-  await keytar.deletePassword(SERVICE, ACCOUNT);
-  return true;
 });
 ipcMain.handle('start-server', () => startServer());
 ipcMain.handle('stop-server', () => stopServer());

@@ -9,8 +9,7 @@
     "package": "electron-builder --win"
   },
   "dependencies": {
-    "@gw2-mcp/shared": "workspace:*",
-    "keytar": "^7.9.0"
+    "@gw2-mcp/shared": "workspace:*"
   },
   "devDependencies": {
     "electron": "^30.0.0",
