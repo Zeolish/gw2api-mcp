@@ -4,9 +4,10 @@
   "private": true,
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "test": "pnpm --filter @gw2-mcp/shared build && vitest run"
+    "test": "vitest",
+    "smoke:mcp": "tsx ../../scripts/smoke/mcp-smoke.ts"
   },
   "dependencies": {
     "fastify": "^4.25.2",
@@ -15,10 +16,12 @@
     "dotenv": "^16.3.1",
     "undici": "^5.28.0",
     "@gw2-mcp/shared": "workspace:*",
-    "keytar": "^7.9.0"
+    "keytar": "^7.9.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "ts-node": "^10.9.1",
-    "vitest": "^0.34.6"
+    "vitest": "^0.34.6",
+    "tsx": "^4.7.3"
   }
 }

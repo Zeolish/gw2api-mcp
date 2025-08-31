@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import { z } from 'zod';
 import {
   McpRequest,
   McpResponse,
@@ -26,7 +27,20 @@ function maskKey(key: string): string {
 }
 
 export function buildServer() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({
+    logger: {
+      level: 'info',
+      redact: ['req.headers.authorization', 'req.headers.cookie', 'req.body.key', 'req.body.apiKey'],
+    },
+  });
+
+  app.addContentTypeParser('application/json-rpc', { parseAs: 'string' }, (req, body, done) => {
+    try {
+      done(null, JSON.parse(body));
+    } catch (err) {
+      done(err as Error);
+    }
+  });
 
   // reject non-loopback
   app.addHook('onRequest', (req, reply, done) => {
@@ -38,12 +52,14 @@ export function buildServer() {
     done();
   });
 
-  app.register(swagger, {
-    openapi: {
-      info: { title: 'GW2 MCP Local Debug', version: '0.0.0' },
-    },
-  });
-  app.register(swaggerUi, { routePrefix: '/docs' });
+  if (process.env.NODE_ENV !== 'production') {
+    app.register(swagger, {
+      openapi: {
+        info: { title: 'GW2 MCP Local Debug', version: '0.0.0' },
+      },
+    });
+    app.register(swaggerUi, { routePrefix: '/docs' });
+  }
 
   const pub = new Gw2Public();
   const acct = new Gw2Account();
@@ -74,14 +90,32 @@ export function buildServer() {
     [ToolNames.AccountWallet]: async () => acct.wallet(),
   };
 
+  const schemas: Record<string, z.ZodTypeAny> = {
+    [ToolNames.SetApiKey]: z.object({ key: z.string() }),
+    [ToolNames.ItemsGet]: z.object({ ids: z.array(z.number()) }),
+    [ToolNames.ItemsSearchByName]: z.object({ name: z.string() }),
+    [ToolNames.RecipesGet]: z.object({ ids: z.array(z.number()) }),
+    [ToolNames.RecipesSearchByOutputItemId]: z.object({ id: z.number() }),
+    [ToolNames.PricesGet]: z.object({ ids: z.array(z.number()) }),
+  };
+
   app.post('/mcp', async (request): Promise<McpResponse> => {
     const body = request.body as McpRequest;
     const fn = methods[body.method];
     if (!fn) {
       return { id: body.id, error: { code: -32601, message: 'Method not found' } };
     }
+    const schema = schemas[body.method];
+    let params = body.params;
+    if (schema) {
+      const parsed = schema.safeParse(body.params);
+      if (!parsed.success) {
+        return { id: body.id, error: { code: -32602, message: 'Invalid params' } };
+      }
+      params = parsed.data;
+    }
     try {
-      const result = await fn(body.params as any);
+      const result = await fn(params as any);
       return { id: body.id, result };
     } catch (err: any) {
       return { id: body.id, error: { code: -32000, message: err.message } };
@@ -121,10 +155,26 @@ export function buildServer() {
     const body = req.body as { ids: number[] };
     return methods[ToolNames.PricesGet](body);
   });
-  app.get('/api/account/materials', async () => methods[ToolNames.AccountMaterials]());
-  app.get('/api/account/bank', async () => methods[ToolNames.AccountBank]());
-  app.get('/api/account/characters', async () => methods[ToolNames.AccountCharacters]());
-  app.get('/api/account/wallet', async () => methods[ToolNames.AccountWallet]());
+
+  const accountShim = (fn: () => Promise<any>) => async (_req: any, reply: any) => {
+    try {
+      return await fn();
+    } catch (err: any) {
+      if (err.message === 'GW2 API key not set') {
+        reply.code(400);
+        return { error: 'GW2 API key not set' };
+      }
+      throw err;
+    }
+  };
+
+  app.get('/api/account/materials', accountShim(() => methods[ToolNames.AccountMaterials]()));
+  app.get('/api/account/bank', accountShim(() => methods[ToolNames.AccountBank]()));
+  app.get('/api/account/characters', accountShim(() => methods[ToolNames.AccountCharacters]()));
+  app.get('/api/account/wallet', accountShim(() => methods[ToolNames.AccountWallet]()));
+
+  app.get('/debug/routes', () => app.printRoutes());
+  app.get('/healthz', async () => ({ ok: true, nowUtc: new Date().toISOString() }));
 
   return app;
 }

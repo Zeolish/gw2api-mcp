@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "pnpm --filter @gw2-mcp/desktop dev",
     "build": "pnpm -r build",
-    "package": "pnpm --filter @gw2-mcp/desktop package"
+    "package": "pnpm --filter @gw2-mcp/desktop package",
+    "test": "pnpm -C apps/server test",
+    "smoke:mcp": "pnpm -C apps/server smoke:mcp"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
