@@ -1,16 +1,24 @@
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } from 'electron';
+import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell, clipboard } from 'electron';
 import path from 'path';
 import keytar from 'keytar';
-import { spawn, ChildProcess } from 'child_process';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { startServer: buildServer } = require('../server');
 
 let tray: Tray | null = null;
 let win: BrowserWindow | null = null;
-let serverProcess: ChildProcess | null = null;
+let serverCtrl: ReturnType<typeof buildServer> | null = null;
+
+const SERVICE = 'GW2Mcp';
+const ACCOUNT = 'GW2_API_KEY';
+const ENDPOINT = 'http://127.0.0.1:5123/mcp';
+const DOCS = 'http://127.0.0.1:5123/docs';
 
 function createWindow() {
+  if (win) return;
   win = new BrowserWindow({
-    width: 300,
-    height: 200,
+    width: 400,
+    height: 300,
+    show: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -18,51 +26,55 @@ function createWindow() {
     }
   });
   win.loadFile(path.join(__dirname, 'index.html'));
-}
-
-function startServer() {
-  if (serverProcess) return;
-  const serverPath = path.join(__dirname, '../../server/dist/index.js');
-  serverProcess = spawn(process.execPath, [serverPath], { stdio: 'inherit' });
-  serverProcess.on('exit', () => {
-    serverProcess = null;
-    getStatus().then((s) => win?.webContents.send('status', s));
+  win.on('closed', () => {
+    win = null;
   });
-  getStatus().then((s) => win?.webContents.send('status', s));
 }
 
-function stopServer() {
-  serverProcess?.kill();
-  serverProcess = null;
-  getStatus().then((s) => win?.webContents.send('status', s));
+async function startServer() {
+  if (serverCtrl) return;
+  serverCtrl = buildServer();
+  await serverCtrl.start();
+  shell.openExternal(DOCS);
+}
+
+async function stopServer() {
+  if (!serverCtrl) return;
+  await serverCtrl.stop();
+  serverCtrl = null;
 }
 
 async function getStatus() {
-  const key = await keytar.getPassword('gw2-mcp', 'api-key');
-  return { key: !!key, server: !!serverProcess };
+  const key = await keytar.getPassword(SERVICE, ACCOUNT);
+  return { key: !!key, server: !!serverCtrl };
 }
 
 app.whenReady().then(() => {
-  tray = new Tray(nativeImage.createEmpty());
-  tray.setToolTip('GW2 MCP');
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      { label: 'Open', click: () => win?.show() },
-      { label: 'Quit', click: () => app.quit() }
-    ])
-  );
   createWindow();
+  tray = new Tray(nativeImage.createEmpty());
+  const menu = Menu.buildFromTemplate([
+    { label: 'Open Settings', click: () => { createWindow(); win?.show(); } },
+    { label: 'Start Server', click: () => startServer() },
+    { label: 'Stop Server', click: () => stopServer() },
+    { label: 'Copy Endpoint', click: () => clipboard.writeText(ENDPOINT) },
+    { label: 'Exit', click: () => app.quit() }
+  ]);
+  tray.setToolTip('GW2 MCP');
+  tray.setContextMenu(menu);
 });
 
 ipcMain.handle('get-status', getStatus);
-ipcMain.handle('set-key', async (_e, key: string) => {
-  if (key) await keytar.setPassword('gw2-mcp', 'api-key', key);
-  else await keytar.deletePassword('gw2-mcp', 'api-key');
+ipcMain.handle('set-api-key', async (_e, key: string) => {
+  await keytar.setPassword(SERVICE, ACCOUNT, key);
   return true;
 });
-ipcMain.handle('start-server', () => {
-  startServer();
+ipcMain.handle('delete-api-key', async () => {
+  await keytar.deletePassword(SERVICE, ACCOUNT);
+  return true;
 });
-ipcMain.handle('stop-server', () => {
-  stopServer();
+ipcMain.handle('start-server', () => startServer());
+ipcMain.handle('stop-server', () => stopServer());
+ipcMain.handle('copy-endpoint', () => {
+  clipboard.writeText(ENDPOINT);
+  return true;
 });

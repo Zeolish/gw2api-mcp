@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html>
   <body>
-    <div>Key: <span id="key"></span></div>
-    <input id="keyInput" placeholder="API Key" />
-    <button id="setKey">Save Key</button>
-    <div>Server: <span id="server"></span></div>
-    <button id="start">Start Server</button>
-    <button id="stop">Stop Server</button>
+    <div>
+      <label for="keyInput">GW2 API Key</label>
+      <input id="keyInput" />
+      <button id="saveKey">Save</button>
+      <button id="deleteKey">Delete</button>
+    </div>
+    <div>
+      <span id="keyStatus"></span>
+      <span id="serverStatus"></span>
+    </div>
+    <div>
+      <button id="startServer">Start Server</button>
+      <button id="stopServer">Stop Server</button>
+    </div>
+    <div>
+      Endpoint: <span id="endpoint"></span>
+      <button id="copyEndpoint">Copy</button>
+    </div>
     <script type="module" src="./renderer.js"></script>
   </body>
 </html>
