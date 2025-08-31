@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "module": "commonjs"
+    "module": "commonjs",
+    "baseUrl": ".",
+    "paths": {
+      "@gw2-mcp/shared": ["../../packages/shared/src"]
+    }
   },
   "include": ["src/**/*"]
 }
