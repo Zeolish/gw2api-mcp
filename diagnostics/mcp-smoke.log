@@ -1,0 +1,6 @@
+REQUEST gw2.getStatus => {}
+RESPONSE 200 {"content-type":"application/json; charset=utf-8","content-length":"82","date":"Sun, 31 Aug 2025 19:21:15 GMT","connection":"keep-alive","keep-alive":"timeout=72"} {"id":"gw2.getStatus","result":{"hasApiKey":false,"server":"running","port":5123}}
+REQUEST gw2.setApiKey => {"key":"FAKE-KEY-FOR-TESTING"}
+RESPONSE 200 {"content-type":"application/json; charset=utf-8","content-length":"43","date":"Sun, 31 Aug 2025 19:21:15 GMT","connection":"keep-alive","keep-alive":"timeout=72"} {"id":"gw2.setApiKey","result":{"ok":true}}
+REQUEST gw2.items.get => {"ids":[19721]}
+RESPONSE 200 {"content-type":"application/json; charset=utf-8","content-length":"71","date":"Sun, 31 Aug 2025 19:21:15 GMT","connection":"keep-alive","keep-alive":"timeout=72"} {"id":"gw2.items.get","error":{"code":-32000,"message":"fetch failed"}}
