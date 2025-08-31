@@ -12,10 +12,7 @@ export default defineConfig({
       outDir: 'dist',
       sourcemap: true,
       rollupOptions: {
-        external: [
-          // ensure native addon loads at runtime from node_modules
-          'keytar',
-        ],
+        external: [],
       },
     },
   },
@@ -30,9 +27,7 @@ export default defineConfig({
       emptyOutDir: false,
       sourcemap: true,
       rollupOptions: {
-        external: [
-          'keytar',
-        ],
+        external: [],
       },
     },
   },

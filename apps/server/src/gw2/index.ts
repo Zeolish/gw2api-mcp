@@ -1,23 +1,7 @@
 import { fetch } from 'undici';
+import { getApiKey, setApiKey, deleteApiKey, hasApiKey, SERVICE, ACCOUNT } from './secret';
 
-let keytar: typeof import('keytar');
-try {
-  keytar = require('keytar');
-} catch {
-  const store = new Map<string, string>();
-  keytar = {
-    async getPassword(service: string, account: string) {
-      return store.get(`${service}:${account}`) ?? null;
-    },
-    async setPassword(service: string, account: string, password: string) {
-      store.set(`${service}:${account}`, password);
-      return true;
-    },
-    async deletePassword(service: string, account: string) {
-      return store.delete(`${service}:${account}`);
-    },
-  } as any;
-}
+export { getApiKey, setApiKey, deleteApiKey, hasApiKey, SERVICE, ACCOUNT };
 
 const BASE = 'https://api.guildwars2.com';
 
@@ -85,7 +69,7 @@ export class Gw2Public {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const key = await keytar.getPassword('GW2Mcp', 'GW2_API_KEY');
+  const key = await getApiKey();
   if (!key) {
     throw new Error('GW2 API key not set');
   }
@@ -105,17 +89,4 @@ export class Gw2Account {
   async wallet(): Promise<unknown> {
     return request('/v2/account/wallet', await authHeaders());
   }
-}
-
-export async function hasApiKey(): Promise<boolean> {
-  const key = await keytar.getPassword('GW2Mcp', 'GW2_API_KEY');
-  return !!key;
-}
-
-export async function setApiKey(key: string): Promise<void> {
-  await keytar.setPassword('GW2Mcp', 'GW2_API_KEY', key);
-}
-
-export async function deleteApiKey(): Promise<void> {
-  await keytar.deletePassword('GW2Mcp', 'GW2_API_KEY');
 }

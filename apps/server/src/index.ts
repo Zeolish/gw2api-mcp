@@ -17,6 +17,8 @@ import {
   hasApiKey,
   setApiKey,
   deleteApiKey,
+  SERVICE,
+  ACCOUNT,
 } from './gw2';
 
 const PORT = 5123;
@@ -33,9 +35,16 @@ export function buildServer() {
   const app = Fastify({
     logger: {
       level: 'info',
-      redact: ['req.headers.authorization', 'req.headers.cookie', 'req.body.key', 'req.body.apiKey'],
+      redact: [
+        'req.body.key',
+        'res.body.key',
+        'req.headers.authorization',
+        'req.headers.cookie',
+      ],
     },
   });
+
+  app.log.info({ keytarService: SERVICE, keytarAccount: ACCOUNT });
 
   app.addContentTypeParser('application/json-rpc', { parseAs: 'string' }, (req, body, done) => {
     try {
@@ -155,6 +164,7 @@ export function buildServer() {
     return methods[ToolNames.SetApiKey](body);
   });
   app.delete('/api/settings/gw2key', async () => methods[ToolNames.DeleteApiKey]());
+  app.get('/api/settings/gw2key/present', async () => ({ hasApiKey: await hasApiKey() }));
   app.get('/api/items', async (req) => {
     const ids = String((req.query as any).ids || '')
       .split(',')
@@ -219,6 +229,11 @@ export function buildServer() {
   });
 
   app.get('/debug/routes', () => app.printRoutes());
+  app.get('/debug/secret', async () => ({
+    service: SERVICE,
+    account: ACCOUNT,
+    hasApiKey: await hasApiKey(),
+  }));
   app.get('/healthz', async () => ({ ok: true, nowUtc: new Date().toISOString() }));
 
   return app;

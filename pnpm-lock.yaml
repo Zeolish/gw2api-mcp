@@ -32,9 +32,6 @@ importers:
       '@gw2-mcp/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      keytar:
-        specifier: ^7.9.0
-        version: 7.9.0
     devDependencies:
       electron:
         specifier: ^30.0.0
