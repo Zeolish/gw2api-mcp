@@ -54,6 +54,11 @@ export function buildServer() {
     done();
   });
 
+  app.addHook('onSend', (_req, reply, _payload, done) => {
+    reply.header('x-gw2mcp', 'fastify');
+    done();
+  });
+
   const pub = new Gw2Public();
   const acct = new Gw2Account();
 
