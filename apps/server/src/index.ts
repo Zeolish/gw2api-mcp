@@ -18,8 +18,15 @@ import {
 const PORT = 5123;
 const HOST = '127.0.0.1';
 
-function buildServer() {
-  const app = Fastify();
+function maskKey(key: string): string {
+  if (key.length <= 4) {
+    return '*'.repeat(key.length);
+  }
+  return `${key.slice(0, 2)}...${key.slice(-2)}`;
+}
+
+export function buildServer() {
+  const app = Fastify({ logger: true });
 
   // reject non-loopback
   app.addHook('onRequest', (req, reply, done) => {
@@ -48,6 +55,7 @@ function buildServer() {
       return res;
     },
     [ToolNames.SetApiKey]: async (p: { key: string }) => {
+      app.log.info({ key: maskKey(p.key) }, 'GW2 API key set');
       await setApiKey(p.key);
       return { ok: true };
     },

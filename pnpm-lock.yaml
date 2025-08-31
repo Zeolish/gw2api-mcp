@@ -29,13 +29,13 @@ importers:
       '@gw2-mcp/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      electron:
-        specifier: ^30.0.0
-        version: 30.5.1
       keytar:
         specifier: ^7.9.0
         version: 7.9.0
     devDependencies:
+      electron:
+        specifier: ^30.0.0
+        version: 30.5.1
       electron-builder:
         specifier: ^24.6.0
         version: 24.13.3(electron-builder-squirrel-windows@24.13.3)

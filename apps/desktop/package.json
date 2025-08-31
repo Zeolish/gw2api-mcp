@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@gw2-mcp/shared": "workspace:*",
-    "electron": "^30.0.0",
     "keytar": "^7.9.0"
   },
   "devDependencies": {
+    "electron": "^30.0.0",
     "electron-builder": "^24.6.0",
     "ts-node": "^10.9.1",
     "electron-vite": "^2.0.0"

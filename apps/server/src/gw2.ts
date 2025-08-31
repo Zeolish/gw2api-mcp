@@ -21,6 +21,22 @@ try {
 
 const BASE = 'https://api.guildwars2.com';
 
+const TTL = 60_000; // 60 seconds
+const cache = new Map<string, { expire: number; value: any }>();
+
+function getCache(key: string) {
+  const entry = cache.get(key);
+  if (entry && entry.expire > Date.now()) {
+    return entry.value;
+  }
+  cache.delete(key);
+  return undefined;
+}
+
+function setCache(key: string, value: any) {
+  cache.set(key, { expire: Date.now() + TTL, value });
+}
+
 async function request<T>(path: string, headers: Record<string, string> = {}, tries = 3): Promise<T> {
   const url = `${BASE}${path}`;
   let delay = 500;
@@ -37,19 +53,34 @@ async function request<T>(path: string, headers: Record<string, string> = {}, tr
 
 export class Gw2Public {
   async itemsGet(ids: number[]): Promise<unknown> {
-    return request(`/v2/items?ids=${ids.join(',')}`);
+    const path = `/v2/items?ids=${ids.join(',')}`;
+    const cached = getCache(path);
+    if (cached) return cached;
+    const res = await request(path);
+    setCache(path, res);
+    return res;
   }
   async itemsSearchByName(name: string): Promise<unknown> {
     return request(`/v2/items/search?name=${encodeURIComponent(name)}`);
   }
   async recipesGet(ids: number[]): Promise<unknown> {
-    return request(`/v2/recipes?ids=${ids.join(',')}`);
+    const path = `/v2/recipes?ids=${ids.join(',')}`;
+    const cached = getCache(path);
+    if (cached) return cached;
+    const res = await request(path);
+    setCache(path, res);
+    return res;
   }
   async recipesSearchByOutputItemId(id: number): Promise<unknown> {
     return request(`/v2/recipes/search?output=${id}`);
   }
   async pricesGet(ids: number[]): Promise<unknown> {
-    return request(`/v2/commerce/prices?ids=${ids.join(',')}`);
+    const path = `/v2/commerce/prices?ids=${ids.join(',')}`;
+    const cached = getCache(path);
+    if (cached) return cached;
+    const res = await request(path);
+    setCache(path, res);
+    return res;
   }
 }
 
